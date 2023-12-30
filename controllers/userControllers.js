@@ -8,67 +8,64 @@ const jwt = require("jsonwebtoken");
 //access public
 
 const userRegister = asyncHandler(async (req, res) => {
-    const { username, email, password } = req.body;
-    if(!username || !email || !password) {
-        res.status(400);
-        throw new Error("All fields are mandetory");
-    }
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
+    res.status(400);
+    throw new Error("All fields are mandetory");
+  }
 
-    const existingUser = await User.findOne({email});
-    if(existingUser){
-        res.status(400);
-        throw new Error("User already exists");
-    }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    // console.log("hashed password is " + hashedPassword);
+  const hashedPassword = await bcrypt.hash(password, 10);
+  // console.log("hashed password is " + hashedPassword);
 
-    const user = await User.create({
-        username,
-        email,
-        password: hashedPassword,
-      })
-
-    res.status(201).send(user);
+  const user = await User.create({
+    username,
+    email,
+    password: hashedPassword,
   });
 
+  res.status(201).send(user);
+});
 
 //desc login
 //route GET /api/user/login
 //access public
 
 const userLogin = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    if(!email || !password) {
-        res.status(400);
-        throw new Error("email and password are mandetory");
-    }
-    const user = await User.findOne({email});
-
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("email and password are mandetory");
+  } else {
+    const user = await User.findOne({ email });
     const match = await bcrypt.compare(password, user.password);
 
-    if(match){
+    if (match) {
       const token = jwt.sign(
         {
-          user:{
+          user: {
             username: user.username,
             email: user.email,
-            id: user.id
-          }
+            id: user.id,
+          },
         },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "30m" }
-      )
+      );
       console.log("logged in succesfully");
-      res.status(200).json({token});
-    }
-    else{
+      res.status(200).json({ token });
+    } else {
       console.log("wrong credentials");
       res.status(400);
       throw new Error("wrong credentials");
-    }   
+    }
+  }
 });
-
 
 //desc get current user data
 //route GET /api/user/current
@@ -76,8 +73,7 @@ const userLogin = asyncHandler(async (req, res) => {
 
 const currentUser = asyncHandler(async (req, res) => {
   const userData = req.user;
-    res.status(200).send(userData);
-  });
+  res.status(200).send(userData);
+});
 
-module.exports = {userRegister, userLogin, currentUser }
-
+module.exports = { userRegister, userLogin, currentUser };
